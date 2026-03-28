@@ -8,7 +8,7 @@ async function bootstrap() {
     origin: ['http://localhost:3000', process.env.FRONTEND_URL], // Allowed origins
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allowed methods
     credentials: true, // Allow credentials (e.g., cookies)
-    allowedHeaders: 'Content-Type, Accept', // Allowed headers
+    allowedHeaders: 'Content-Type, Accept, Authorization', // Allowed headers
   });
 
   // Add global validation pipe
