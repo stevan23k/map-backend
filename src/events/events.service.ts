@@ -21,6 +21,7 @@ export class EventsService {
 
   async findAll(): Promise<Event[]> {
     return this.eventsRepository.find({
+      where: { deleted: false },
       relations: ['user'],
       order: { datetime: 'ASC' },
     });
@@ -28,8 +29,12 @@ export class EventsService {
 
   async findOne(id: string): Promise<Event | null> {
     return this.eventsRepository.findOne({
-      where: { id },
+      where: { id, deleted: false },
       relations: ['user'],
     });
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.eventsRepository.update(id, { deleted: true });
   }
 }

@@ -33,6 +33,9 @@ export class Event {
   @Column()
   userId: string;
 
+  @Column({ default: false })
+  deleted: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -9,8 +9,13 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { LessThan } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { Event } from './entities/event.entity';
 import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
@@ -28,12 +33,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly eventsService: EventsService,
     private readonly jwtService: JwtService,
+    @InjectRepository(Event)
+    private readonly eventsRepository: Repository<Event>,
   ) { }
 
   async handleConnection(client: Socket) {
     try {
       let token = client.handshake.auth.token || client.handshake.headers.authorization;
-      
+
       if (!token) {
         this.logger.warn(`Connection rejected: No token provided (Client: ${client.id})`);
         client.disconnect();
@@ -101,5 +108,36 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Broadcast location to everyone else
     client.broadcast.emit('user_location_updated', userData);
+  }
+
+  /**
+   * Every minute: soft-delete events that started more than 1 day ago
+   * and notify all connected clients.
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async cleanupExpiredEvents(): Promise<void> {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const expired = await this.eventsRepository.find({
+      where: {
+        deleted: false,
+        datetime: LessThan(oneDayAgo),
+      },
+      select: ['id'],
+    });
+
+    if (expired.length === 0) return;
+
+    const ids = expired.map((e) => e.id);
+
+    await this.eventsRepository.update(
+      { deleted: false, datetime: LessThan(oneDayAgo) },
+      { deleted: true },
+    );
+
+    this.logger.log(`Auto-deleted ${ids.length} expired event(s): ${ids.join(', ')}`);
+
+    // Notify all connected clients so they remove the markers
+    this.server.emit('events_deleted', ids);
   }
 }
