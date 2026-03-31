@@ -23,8 +23,8 @@ export class AuthController {
     
     response.cookie('access_token', result.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true, // Cross-site cookies MUST be secure
+      sameSite: 'none', // Required for cross-site (jes.com.co -> jes.com)
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
