@@ -9,8 +9,20 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
-    return this.authService.register(createUserDto);
+  async register(
+    @Body() createUserDto: CreateUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.register(createUserDto);
+
+    response.cookie('access_token', result.access_token, {
+      httpOnly: true,
+      secure: true, // Cross-site/Same-site across subdomains
+      sameSite: 'none', // Required for cross-origin (mapp -> mapp-api)
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return result;
   }
 
   @Post('login')
