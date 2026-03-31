@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('events')
@@ -41,4 +41,8 @@ export class Event {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToMany(() => User, (user) => user.attendedEvents)
+  @JoinTable({ name: 'event_attendees' })
+  attendees: User[];
 }

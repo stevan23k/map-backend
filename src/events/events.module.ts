@@ -5,6 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventsService } from './events.service';
 import { EventsGateway } from './events.gateway';
+import { EventsController } from './events.controller';
 import { Event } from './entities/event.entity';
 
 @Module({
@@ -20,6 +21,7 @@ import { Event } from './entities/event.entity';
       }),
     }),
   ],
+  controllers: [EventsController],
   providers: [EventsService, EventsGateway],
   exports: [EventsService],
 })

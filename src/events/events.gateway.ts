@@ -20,7 +20,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: [process.env.FRONTEND_URL || 'https://mapp.jes.com.co', (process.env.FRONTEND_URL || 'https://mapp.jes.com.co').replace('https://', 'http://')],
+    origin: [process.env.FRONTEND_URL || 'https://mapp.jes.com.co', (process.env.FRONTEND_URL || 'https://mapp.jes.com.co').replace('https://', 'http://'), "http://localhost:3000"],
     credentials: true,
   },
 })
