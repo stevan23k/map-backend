@@ -20,7 +20,8 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: [process.env.FRONTEND_URL || 'https://mapp.jes.com.co', (process.env.FRONTEND_URL || 'https://mapp.jes.com.co').replace('https://', 'http://')],
+    credentials: true,
   },
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
