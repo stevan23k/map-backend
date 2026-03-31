@@ -15,8 +15,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 import { Event } from './entities/event.entity';
-import { Logger } from '@nestjs/common';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
@@ -89,6 +90,36 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Broadcast to all clients including sender
     this.server.emit('event_created', newEvent);
     return newEvent;
+  }
+
+  @SubscribeMessage('update_event')
+  async handleUpdateEvent(
+    @MessageBody() data: { id: string; updateEventDto: UpdateEventDto },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const event = await this.eventsService.findOne(data.id);
+    if (!event || event.userId !== client.data.user.id) {
+      return { success: false, message: 'Not authorized' };
+    }
+
+    const updatedEvent = await this.eventsService.update(data.id, data.updateEventDto);
+    this.server.emit('event_updated', updatedEvent);
+    return updatedEvent;
+  }
+
+  @SubscribeMessage('delete_event')
+  async handleDeleteEvent(
+    @MessageBody() id: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const event = await this.eventsService.findOne(id);
+    if (!event || event.userId !== client.data.user.id) {
+      return { success: false, message: 'Not authorized' };
+    }
+
+    await this.eventsService.softDelete(id);
+    this.server.emit('events_deleted', [id]);
+    return { success: true };
   }
 
   @SubscribeMessage('update_location')

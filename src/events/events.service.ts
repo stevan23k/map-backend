@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
 export class EventsService {
@@ -36,6 +37,17 @@ export class EventsService {
 
   async softDelete(id: string): Promise<void> {
     await this.eventsRepository.update(id, { deleted: true });
+  }
+
+  async update(id: string, updateEventDto: UpdateEventDto): Promise<Event> {
+    await this.eventsRepository.update(id, updateEventDto);
+    const updated = await this.findOne(id);
+    if (!updated) throw new NotFoundException('Event not found');
+    return updated;
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.eventsRepository.delete(id);
   }
 
   async toggleAttendance(eventId: string, userId: string): Promise<Event> {
